@@ -80,11 +80,15 @@ function stewa_plot_printer(file_name, figure_handle, dpi, ratio)
   if inkscape_installed
     disp('inkscape installation found!');
     %disp('PNG output enabled!');
-    %fflush(stdout);
+    if is_octave
+      fflush(stdout);
+    end
   else
     disp('inkscape installation not found!');
     %disp('SVG output enabled!');
-    %fflush(stdout);
+    if is_octave
+      fflush(stdout);
+    end
   end
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -138,19 +142,17 @@ function stewa_plot_printer(file_name, figure_handle, dpi, ratio)
     %running on windows?
     if ispc()
       if is_octave
-        command_string = ['".\inkscape\inkscape' command_string];
-        command_string = [command_string, ' > NUL"'];
+        command_string = ['.\inkscape\inkscape' command_string];
       end
     end
     
     %running on linux?
     if isunix()
       command_string = ['inkscape' command_string];
-      command_string = [command_string, ' >/dev/null'];
     end
     
     %execute command
-    system(command_string);    
+    [a, b] = system(command_string);    
     
     %cleanup
     if ispc()

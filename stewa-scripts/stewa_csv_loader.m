@@ -66,7 +66,7 @@ function data = stewa_csv_loader(file_path, delimiter, header_size)
   
   %read data from file
   if is_octave
-    data = dlmread(opened_file, delimiter, header_size);
+    data = dlmread(opened_file, delimiter, header_size, 0);
   else
     data = dlmread(file_path, delimiter, header_size, 0);
   end

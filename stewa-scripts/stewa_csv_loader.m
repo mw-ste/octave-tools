@@ -8,7 +8,7 @@ function data = stewa_csv_loader(file_path, delimiter, header_size)
 
   %error handling
   if nargin < 1
-    msg = ["Not enough input arguments"];
+    msg = 'Not enough input arguments';
     error(msg);
     return;
   end
@@ -25,14 +25,21 @@ function data = stewa_csv_loader(file_path, delimiter, header_size)
   
   %error handling
   if ~ischar(file_path)
-    msg = ["Input file_path must be string"];
+    msg = 'Input file_path must be string';
     error(msg);
     return;
   end
   
   %error handling
   if ~ischar(delimiter)
-    msg = ["Input delimiter must be string"];
+    msg = 'Input delimiter must be string';
+    error(msg);
+    return;
+  end
+  
+  %error handling
+  if ~isnumeric(header_size)
+    msg = 'Input header_size must be number';
     error(msg);
     return;
   end
@@ -43,10 +50,12 @@ function data = stewa_csv_loader(file_path, delimiter, header_size)
   opened_file = fopen(file_path);
   
   %error handling
-  if ~is_valid_file_id(opened_file)
-    msg = ["Couldn't open file: ", file_path];
-    error(msg);
-    return;
+  if is_octave
+    if ~is_valid_file_id(opened_file)
+      msg = ['Could not open file: ', file_path];
+      error(msg);
+      return;
+    end
   end
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -56,10 +65,14 @@ function data = stewa_csv_loader(file_path, delimiter, header_size)
   %first_line = strsplit(first_line, "; ");
   
   %read data from file
-  input_data = dlmread(opened_file, delimiter);
+  if is_octave
+    data = dlmread(opened_file, delimiter, header_size);
+  else
+    data = dlmread(file_path, delimiter, header_size, 0);
+  end
   fclose(opened_file);
   
   %trim to useful rows
-  data = input_data(1 + header_size : size(input_data, 1), :);
-  
+  %data = input_data(1 + header_size : size(input_data, 1), :);
+    
 end

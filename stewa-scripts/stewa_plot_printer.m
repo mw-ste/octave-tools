@@ -14,14 +14,14 @@ function stewa_plot_printer(file_name, figure_handle, dpi, ratio)
 
   %error handling
   if nargin < 1
-    msg = ["Not enough input arguments"];
+    msg = 'Not enough input arguments';
     error(msg);
     return;
   end
   
   %error handling
   if ~ischar(file_name)
-    msg = "file_name must be a string!";
+    msg = 'file_name must be a string!';
     error(msg);
     return;
   end
@@ -40,6 +40,20 @@ function stewa_plot_printer(file_name, figure_handle, dpi, ratio)
   if nargin < 2
     figure_handle = gcf;
   end
+  
+  %error handling
+  if ~isnumeric(dpi)
+    msg = 'dpi must be number!';
+    error(msg);
+    return;
+  end
+  
+  %error handling
+  if ~isnumeric(ratio)
+    msg = 'ratio must be number!';
+    error(msg);
+    return;
+  end
    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -56,7 +70,7 @@ function stewa_plot_printer(file_name, figure_handle, dpi, ratio)
 
   %running on linux?
   if isunix
-    if system("inkscape -V > /dev/null") ~= 0
+    if system('inkscape -V > /dev/null') ~= 0
       inkscape_installed = false;
     else
       inkscape_installed = true;
@@ -64,37 +78,74 @@ function stewa_plot_printer(file_name, figure_handle, dpi, ratio)
   end
   
   if inkscape_installed
-    disp("inkscape installation found!");
-    disp("PNG output enabled!");
-    fflush(stdout);
+    disp('inkscape installation found!');
+    %disp('PNG output enabled!');
+    %fflush(stdout);
   else
-    disp("inkscape installation not found!");
-    disp("SVG output enabled!");
-    fflush(stdout);
+    disp('inkscape installation not found!');
+    %disp('SVG output enabled!');
+    %fflush(stdout);
+  end
+  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  % take shortcut if running matlab
+  if ~is_octave
+    if ~ispc
+      msg = 'not supporting matlab on linux!';
+      error(msg);
+      return;
+    end
+    
+    set(figure_handle, 'Position', [0 0 1200 1200 / ratio])
+    set(figure_handle,'PaperPositionMode','auto')
+    
+    if ~inkscape_installed
+      print(figure_handle, [file_name, '.png'], '-dpng', ['-r' num2str(dpi)])
+    else
+      print(figure_handle, [file_name, '.eps'],'-depsc2','-r300');
+      
+      command_string = [' -f ', file_name, '.eps'];
+      command_string = [command_string, ' -C -d ', num2str(dpi) ,' -e ', file_name, '.png'];
+      command_string = ['.\inkscape\inkscape' command_string];
+
+      %execute command
+      [a, b] = system(command_string);
+    end
+    
+    %cleanup
+    if ispc()
+      system(strrep(['del "', file_name, '.eps"'], '/', '\\'));
+    end
+    
+    return;
   end
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
   %save vector graphic
-  resolution = ["-S1200,", num2str(1200 / ratio)];
-  print(figure_handle, [file_name, ".svg"], resolution);
-  
+  resolution = ['-S1200,' num2str(1200 / ratio)];
+  print(figure_handle, [file_name, '.svg'], resolution, '-dsvg');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
   %convert to png image
   if inkscape_installed
     
-    command_string = ['"inkscape" -f ', file_name, '.svg'];
+    command_string = [' -f ', file_name, '.svg'];
     command_string = [command_string, ' -C -d ', num2str(dpi) ,' -e ', file_name, '.png'];
     
     %running on windows?
     if ispc()
-      command_string = ['".\inkscape\' command_string];
-      command_string = [command_string, ' >NUL'];
+      if is_octave
+        command_string = ['".\inkscape\inkscape' command_string];
+        command_string = [command_string, ' > NUL"'];
+      end
     end
     
     %running on linux?
     if isunix()
+      command_string = ['inkscape' command_string];
       command_string = [command_string, ' >/dev/null'];
     end
     
@@ -103,7 +154,7 @@ function stewa_plot_printer(file_name, figure_handle, dpi, ratio)
     
     %cleanup
     if ispc()
-      system(strrep(['del "', file_name, '.svg"'], "/", "\\"));
+      system(strrep(['del "', file_name, '.svg"'], '/', '\\'));
     end
     
     if isunix()
